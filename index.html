@@ -1,0 +1,2282 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高機能 枠付きQRコード作成ツール</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --accent: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 40px;
+    }
+
+    /* ヘッダー */
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .logo-area h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-help {
+      background: #eff6ff;
+      color: var(--primary);
+      border: 1px solid #bfdbfe;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-help:hover {
+      background: #dbeafe;
+    }
+
+    /* メインレイアウト */
+    .container {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* カード・パネル共通 */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #0f172a;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 8px;
+    }
+
+    /* タブ切り替え */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .tab-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* フォーム要素 */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"], input[type="url"], textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus, input[type="url"]:focus, textarea:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .btn-paste {
+      padding: 0 14px;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-paste:hover {
+      background: #e2e8f0;
+    }
+
+    /* よく使うフレーズパレット */
+    .phrase-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .chip {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 5px 10px;
+      border-radius: 16px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .chip:hover {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      color: var(--primary);
+    }
+
+    .chip-add {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+      color: #047857;
+    }
+
+    .chip-add:hover {
+      background: #d1fae5;
+    }
+
+    /* 四方向切替ナビ */
+    .dir-nav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .dir-btn {
+      padding: 8px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .dir-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    /* カラー＆スタイルコントロール */
+    .style-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .color-picker-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .color-picker-item input[type="color"] {
+      -webkit-appearance: none;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* テーマプリセット */
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .theme-btn {
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #ffffff;
+    }
+
+    .theme-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    /* プレビュー表示カラム */
+    .preview-column {
+      position: sticky;
+      top: 80px;
+    }
+
+    .preview-box {
+      background: #f1f5f9;
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 360px;
+    }
+
+    #qrCanvas {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    /* コントラスト警告 */
+    .contrast-badge {
+      margin-top: 10px;
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .contrast-ok {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .contrast-warn {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    /* アクションボタン群 */
+    .action-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .btn-main {
+      padding: 12px;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn-main:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-sub {
+      padding: 10px;
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-sub:hover {
+      background: #f8fafc;
+    }
+
+    /* モーダルダイアログ */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-content {
+      background: #ffffff;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    /* トースト通知 */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #0f172a;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 2000;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 履歴リスト */
+    .history-list {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .history-item {
+      flex: 0 0 130px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .history-item:hover {
+      border-color: var(--primary);
+    }
+
+    /* 一括プレビューグリッド */
+    .batch-result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .batch-card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .batch-card img {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+
+    /* 印刷スタイル [バグ修正2: 不要な白紙ページ生成を防止] */
+    @media print {
+      body > *:not(#printArea) {
+        display: none !important;
+      }
+      #printArea {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+      .print-header {
+        font-size: 1.2rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #000;
+      }
+      .print-grid {
+        display: grid;
+        grid-template-columns: repeat(var(--print-cols, 2), 1fr);
+        gap: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-area">
+      <h1>📷 枠付きQRコード作成ツール</h1>
+    </div>
+    <button class="btn-help" onclick="toggleModal(true)">❓ 使い方はこちら</button>
+  </header>
+
+  <main class="container">
+    <!-- 設定・入力エリア -->
+    <div class="main-column">
+
+      <!-- タブ選択 -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchMainTab('url')">🌐 Web URL</button>
+        <button class="tab-btn" onclick="switchMainTab('gform')">📝 Googleフォーム</button>
+        <button class="tab-btn" onclick="switchMainTab('wifi')">📶 Wi-Fi設定</button>
+        <button class="tab-btn" onclick="switchMainTab('batch')">📦 CSV一括作成</button>
+      </div>
+
+      <!-- 入力カード -->
+      <div class="card">
+        <div id="tabContentUrl">
+          <div class="card-title">🔗 リンク先URLの入力</div>
+          <div class="form-group">
+            <div class="input-wrapper">
+              <input type="text" id="targetUrl" placeholder="https://example.com" value="https://example.com" oninput="onUrlInput()" onchange="commitHistory()">
+              <button class="btn-paste" onclick="pasteUrl()">📋 貼り付け</button>
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">※ http(s):// は自動補完されます</p>
+          </div>
+        </div>
+
+        <div id="tabContentGForm" style="display: none;">
+          <div class="card-title">📝 Googleフォーム設定</div>
+          <div class="form-group">
+            <label class="form-label">GoogleフォームURL / 事前入力リンク</label>
+            <input type="text" id="gformUrl" placeholder="https://docs.google.com/forms/d/e/.../viewform" oninput="onGFormInput()" onchange="commitHistory()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">クラス・班 クイック選択パラメータ</label>
+            <div class="phrase-chips">
+              <span class="chip" onclick="applyGFormClass('1年1組')">1年1組</span>
+              <span class="chip" onclick="applyGFormClass('1年2組')">1年2組</span>
+              <span class="chip" onclick="applyGFormClass('2年1組')">2年1組</span>
+              <span class="chip" onclick="applyGFormClass('3年1組')">3年1組</span>
+              <span class="chip" onclick="applyGFormClass('1班')">1班</span>
+              <span class="chip" onclick="applyGFormClass('2班')">2班</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="tabContentWifi" style="display: none;">
+          <div class="card-title">📶 Wi-Fi自動接続QR作成</div>
+          <div class="form-group">
+            <label class="form-label">SSID（ネットワーク名）</label>
+            <input type="text" id="wifiSsid" placeholder="School_Wi-Fi" oninput="updateWifiQr()" onchange="commitHistory()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">パスワード</label>
+            <input type="text" id="wifiPassword" placeholder="Password123" oninput="updateWifiQr()" onchange="commitHistory()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">暗号化方式</label>
+            <select id="wifiType" onchange="updateWifiQr(); commitHistory();">
+              <option value="WPA">WPA/WPA2/WPA3</option>
+              <option value="WEP">WEP</option>
+              <option value="nopass">暗号化なし（オープン）</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="tabContentBatch" style="display: none;">
+          <div class="card-title">📦 改行・CSV一括変換</div>
+          <div class="form-group">
+            <label class="form-label">URLリスト（1行につき1件）</label>
+            <textarea id="batchInput" rows="4" placeholder="https://site1.com&#10;https://site2.com"></textarea>
+          </div>
+          <button class="btn-sub" style="width: 100%;" onclick="processBatch()">⚡ 一括生成プレビュー</button>
+
+          <!-- 一括変換結果表示エリア -->
+          <div id="batchContainer" style="display: none; margin-top: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="form-label" style="margin: 0;">生成結果一覧</span>
+              <button class="btn-sub" style="padding: 4px 10px; font-size: 0.78rem;" onclick="printBatchAll()">🖨 一括印刷する</button>
+            </div>
+            <div class="batch-result-grid" id="batchResultGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 四方向テキストレイアウト設定 -->
+      <div class="card">
+        <div class="card-title">💬 枠付き文章設定（四方向）</div>
+        
+        <!-- 方向切り替えボタン -->
+        <div class="dir-nav">
+          <button class="dir-btn active" id="dirBtnTop" onclick="switchDirection('top')">⬆ 上部</button>
+          <button class="dir-btn" id="dirBtnBottom" onclick="switchDirection('bottom')">⬇ 下部</button>
+          <button class="dir-btn" id="dirBtnLeft" onclick="switchDirection('left')">⬅ 左側</button>
+          <button class="dir-btn" id="dirBtnRight" onclick="switchDirection('right')">➡ 右側</button>
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" style="margin: 0;">表示テキスト</label>
+            <label style="font-size: 0.8rem; cursor: pointer;">
+              <input type="checkbox" id="dirEnable" checked onchange="updateCurrentDirSetting()"> この方向を表示する
+            </label>
+          </div>
+          <input type="text" id="dirText" placeholder="テキストを入力..." oninput="updateCurrentDirSetting()">
+        </div>
+
+        <!-- よく使う定型文パレット -->
+        <div class="form-group">
+          <label class="form-label">よく使うフレーズ (ワンタップ入力)</label>
+          <div class="phrase-chips" id="phrasePalette">
+            <!-- 動的挿入 -->
+          </div>
+        </div>
+
+        <!-- 個別文字・枠のスタイリング -->
+        <div class="style-grid">
+          <div>
+            <label class="form-label">文字サイズ</label>
+            <select id="dirFontSize" onchange="updateCurrentDirSetting()">
+              <option value="12">小 (12px)</option>
+              <option value="16" selected>中 (16px)</option>
+              <option value="20">大 (20px)</option>
+              <option value="24">特大 (24px)</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">文字色</label>
+            <div class="color-picker-item">
+              <input type="color" id="dirTextColor" value="#ffffff" oninput="updateCurrentDirSetting()" onchange="updateCurrentDirSetting()">
+            </div>
+          </div>
+          <div>
+            <label class="form-label">枠背景色</label>
+            <div class="color-picker-item">
+              <input type="color" id="dirBgColor" value="#2563eb" oninput="updateCurrentDirSetting()" onchange="updateCurrentDirSetting()">
+            </div>
+          </div>
+          <div id="verticalOption" style="display: none;">
+            <label class="form-label">文字方向</label>
+            <select id="dirOrient" onchange="updateCurrentDirSetting()">
+              <option value="vertical" selected>縦書き</option>
+              <option value="horizontal">横書き</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- デザイン・テーマカスタマイズ -->
+      <div class="card">
+        <div class="card-title">🎨 テーマ ＆ アイコン設定</div>
+        
+        <div class="form-group">
+          <label class="form-label">ワンクリック配色テーマ</label>
+          <div class="theme-grid">
+            <button class="theme-btn" onclick="applyTheme('standard')"><span class="theme-dot" style="background:#2563eb;"></span> 標準ブルー</button>
+            <button class="theme-btn" onclick="applyTheme('gpurple')"><span class="theme-dot" style="background:#7c3aed;"></span> Google紫</button>
+            <button class="theme-btn" onclick="applyTheme('school')"><span class="theme-dot" style="background:#059669;"></span> 学校ポップ</button>
+            <button class="theme-btn" onclick="applyTheme('chic')"><span class="theme-dot" style="background:#1e293b;"></span> シック黒</button>
+            <button class="theme-btn" onclick="applyTheme('warning')"><span class="theme-dot" style="background:#dc2626;"></span> 注目レッド</button>
+            <button class="theme-btn" onclick="applyTheme('natural')"><span class="theme-dot" style="background:#d97706;"></span> オレンジ</button>
+          </div>
+        </div>
+
+        <div class="style-grid">
+          <div>
+            <label class="form-label">QRコードドット色</label>
+            <div class="color-picker-item">
+              <input type="color" id="qrDarkColor" value="#000000" oninput="renderQR()" onchange="renderQR()">
+            </div>
+          </div>
+          <div>
+            <label class="form-label">カード背景色</label>
+            <div class="color-picker-item">
+              <input type="color" id="qrLightColor" value="#ffffff" oninput="renderQR()" onchange="renderQR()">
+            </div>
+          </div>
+          <div>
+            <label class="form-label">ドット形状</label>
+            <select id="dotStyle" onchange="renderQR()">
+              <option value="square" selected>標準 (四角)</option>
+              <option value="circle">ポップ (丸型)</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">中央アイコン/ロゴ</label>
+            <select id="centerIconType" onchange="onCenterIconChange()">
+              <option value="none">なし</option>
+              <option value="emoji">絵文字</option>
+              <option value="image">画像アップロード</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="emojiSelectGroup" class="form-group" style="margin-top: 10px; display: none;">
+          <label class="form-label">絵文字を選択</label>
+          <div class="phrase-chips">
+            <span class="chip" onclick="selectEmoji('🔗')">🔗</span>
+            <span class="chip" onclick="selectEmoji('📝')">📝</span>
+            <span class="chip" onclick="selectEmoji('🏫')">🏫</span>
+            <span class="chip" onclick="selectEmoji('📹')">📹</span>
+            <span class="chip" onclick="selectEmoji('💡')">💡</span>
+            <span class="chip" onclick="selectEmoji('📌')">📌</span>
+          </div>
+        </div>
+
+        <div id="imageUploadGroup" class="form-group" style="margin-top: 10px; display: none;">
+          <label class="form-label">ロゴ画像を選択 (PNG/JPG)</label>
+          <input type="file" id="logoFileInput" accept="image/*" onchange="handleLogoUpload(event)">
+        </div>
+      </div>
+
+      <!-- 作成履歴 -->
+      <div class="card">
+        <div class="card-title">🕒 作成履歴 (最近の10件)</div>
+        <div class="history-list" id="historyList">
+          <p style="font-size: 0.8rem; color: var(--text-muted);">履歴はありません</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- プレビュー＆ダウンロード カラム -->
+    <div class="preview-column">
+      <div class="card">
+        <div class="card-title">👁 リアルタイムプレビュー</div>
+        <div class="preview-box">
+          <canvas id="qrCanvas" width="400" height="400"></canvas>
+          <div id="contrastBadge" class="contrast-badge contrast-ok">✓ 読み取り視認性良好</div>
+        </div>
+
+        <div class="action-btns">
+          <button class="btn-main" onclick="downloadPNG()">💾 PNG画像として保存</button>
+          <button class="btn-sub" onclick="downloadSVG()">📐 SVG形式で保存 (ベクター)</button>
+          <button class="btn-sub" onclick="copyToClipboard()">📋 画像をクリップボードにコピー</button>
+          
+          <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <label style="font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              <input type="checkbox" id="transparentBg" onchange="renderQR()"> 背景を透過する
+            </label>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid var(--border); margin: 8px 0;">
+
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label class="form-label">A4印刷用ヘッダータイトル</label>
+            <input type="text" id="printHeaderTitle" placeholder="例：〇年〇組 提出用QRコード配布シート" style="font-size: 0.85rem; padding: 6px 10px;">
+          </div>
+
+          <label class="form-label">A4一括印刷枚数配置</label>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn-sub" style="flex:1;" onclick="printLayout(1)">1個</button>
+            <button class="btn-sub" style="flex:1;" onclick="printLayout(4)">4個</button>
+            <button class="btn-sub" style="flex:1;" onclick="printLayout(6)">6個</button>
+            <button class="btn-sub" style="flex:1;" onclick="printLayout(9)">9個</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ヘルプモーダル -->
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>❓ 枠付きQRコード作成ツールの使い方</h2>
+        <button class="modal-close" onclick="toggleModal(false)">&times;</button>
+      </div>
+      <div style="font-size: 0.9rem; line-height: 1.6;">
+        <h3 style="color: var(--primary); margin-bottom: 4px;">1. URLやGoogleフォームを入力</h3>
+        <p>上部の入力欄に接続したいウェブサイトのURLを貼り付けます。「Googleフォーム」タブを選べば、1年1組や1班などの事前入力リンクも素早くセットできます。</p>
+
+        <h3 style="color: var(--primary); margin-top: 14px; margin-bottom: 4px;">2. 枠（四方向）に文章をセット</h3>
+        <p>QRコードの上・下・左・右に好きな案内文を添えることができます。「振り返りはこちら」「先生から指示があったらアクセスしましょう」などの定型文ボタンを押すだけで一発入力できます。</p>
+
+        <h3 style="color: var(--primary); margin-top: 14px; margin-bottom: 4px;">3. ロゴ・絵文字とテーマ配色</h3>
+        <p>中央に校章や企業ロゴ画像、または絵文字を重ねることができます。ロゴを重ねても読めるよう高精度補正が自動適用されます。</p>
+
+        <h3 style="color: var(--primary); margin-top: 14px; margin-bottom: 4px;">4. 保存・印刷配布</h3>
+        <p>「PNG画像として保存」を押してWordやPowerPointに貼り付けたり、「A4印刷」ボタンでプリント配布用に複数個を並べて印刷できます。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト通知 -->
+  <div class="toast" id="toast">メッセージ</div>
+
+  <!-- 印刷用非表示領域 -->
+  <div id="printArea" style="display: none;"></div>
+
+  <!-- JavaScript: 埋め込みQRエンジン ＆ アプリ制御 -->
+  <script>
+    /* =========================================================
+       1. 純粋JavaScript 完全実装QRコード生成エンジン (Version 1-40 フル対応)
+       ========================================================= */
+    var QRCodeLib = (function() {
+      function QRPolynomial(num, shift) {
+        if (num.length == undefined) throw new Error(num.length + "/" + shift);
+        var offset = 0;
+        while (offset < num.length && num[offset] == 0) offset++;
+        this.num = new Array(num.length - offset + shift);
+        for (var i = 0; i < num.length - offset; i++) this.num[i] = num[offset + i];
+      }
+      QRPolynomial.prototype = {
+        get: function(index) { return this.num[index]; },
+        getLength: function() { return this.num.length; },
+        multiply: function(e) {
+          var num = new Array(this.getLength() + e.getLength() - 1);
+          for (var i = 0; i < num.length; i++) num[i] = 0;
+          for (var i = 0; i < this.getLength(); i++) {
+            for (var j = 0; j < e.getLength(); j++) {
+              if (this.get(i) === 0 || e.get(j) === 0) continue;
+              num[i + j] ^= QRMath.gexp(QRMath.glog(this.get(i)) + QRMath.glog(e.get(j)));
+            }
+          }
+          return new QRPolynomial(num, 0);
+        },
+        mod: function(e) {
+          if (this.getLength() - e.getLength() < 0) return this;
+          var ratio = QRMath.glog(this.get(0)) - QRMath.glog(e.get(0));
+          var num = new Array(this.getLength());
+          for (var i = 0; i < this.getLength(); i++) num[i] = this.get(i);
+          for (var i = 0; i < e.getLength(); i++) {
+            num[i] ^= QRMath.gexp(QRMath.glog(e.get(i)) + ratio);
+          }
+          return new QRPolynomial(num, 0).mod(e);
+        }
+      };
+
+      var QRMath = {
+        glog: function(n) {
+          if (n < 1) throw new Error("glog(" + n + ")");
+          return QRMath.LOG_TABLE[n];
+        },
+        gexp: function(n) {
+          while (n < 0) n += 255;
+          while (n >= 256) n -= 255;
+          return QRMath.EXP_TABLE[n];
+        },
+        EXP_TABLE: new Array(256),
+        LOG_TABLE: new Array(256)
+      };
+
+      for (var i = 0; i < 8; i++) QRMath.EXP_TABLE[i] = 1 << i;
+      for (var i = 8; i < 256; i++) QRMath.EXP_TABLE[i] = QRMath.EXP_TABLE[i - 4] ^ QRMath.EXP_TABLE[i - 5] ^ QRMath.EXP_TABLE[i - 6] ^ QRMath.EXP_TABLE[i - 8];
+      for (var i = 0; i < 255; i++) QRMath.LOG_TABLE[QRMath.EXP_TABLE[i]] = i;
+
+      function QRRSBlock(totalCount, dataCount) {
+        this.totalCount = totalCount;
+        this.dataCount = dataCount;
+      }
+      QRRSBlock.RS_BLOCK_TABLE = [
+        [1,26,19],[1,26,16],[1,26,13],[1,26,9],
+        [1,44,34],[1,44,28],[1,44,22],[1,44,16],
+        [1,70,55],[1,70,44],[2,35,17],[2,35,13],
+        [1,100,80],[2,50,32],[2,50,24],[4,25,9],
+        [1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],
+        [2,86,68],[4,43,27],[4,43,19],[4,43,15],
+        [2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],
+        [2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],
+        [2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],
+        [2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],
+        [4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],
+        [2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],
+        [4,133,107],[8,59,37],[8,37,15,4,38,16],[12,33,11,4,34,12],
+        [3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],
+        [5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],
+        [5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],
+        [1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],
+        [5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],
+        [3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],
+        [3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],
+        [4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],
+        [2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],
+        [4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],
+        [6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],
+        [8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],
+        [10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],
+        [8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,22,54,24],[12,45,15,28,46,16],
+        [3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],
+        [7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],
+        [5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],
+        [13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],
+        [17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],
+        [17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],
+        [13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],
+        [12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],
+        [6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],
+        [17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],
+        [4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],
+        [20,147,117,4,148,118],[40,75,47,1,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],
+        [19,148,118,6,149,119],[18,75,47,26,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]
+      ];
+
+      QRRSBlock.getRSBlocks = function(typeNumber, errorCorrectLevel) {
+        var rsBlock = QRRSBlock.getRsBlockTable(typeNumber, errorCorrectLevel);
+        if (rsBlock == undefined) throw new Error("bad rs block @ typeNumber:" + typeNumber);
+        var length = rsBlock.length / 3;
+        var list = [];
+        for (var i = 0; i < length; i++) {
+          var count = rsBlock[i * 3 + 0];
+          var totalCount = rsBlock[i * 3 + 1];
+          var dataCount = rsBlock[i * 3 + 2];
+          for (var j = 0; j < count; j++) list.push(new QRRSBlock(totalCount, dataCount));
+        }
+        return list;
+      };
+
+      QRRSBlock.getRsBlockTable = function(typeNumber, errorCorrectLevel) {
+        switch (errorCorrectLevel) {
+          case 1: return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+          case 0: return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+          case 3: return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+          case 2: return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+          default: return undefined;
+        }
+      };
+
+      function BitBuffer() {
+        this.buffer = [];
+        this.length = 0;
+      }
+      BitBuffer.prototype = {
+        get: function(index) {
+          var bufIndex = Math.floor(index / 8);
+          return ((this.buffer[bufIndex] >>> (7 - index % 8)) & 1) == 1;
+        },
+        put: function(num, length) {
+          for (var i = 0; i < length; i++) this.putBit(((num >>> (length - i - 1)) & 1) == 1);
+        },
+        putBit: function(bit) {
+          if (this.length == this.buffer.length * 8) this.buffer.push(0);
+          if (bit) this.buffer[this.length >>> 3] |= (0x80 >>> (this.length % 8));
+          this.length++;
+        }
+      };
+
+      function QRCode(typeNumber, errorCorrectLevel) {
+        this.typeNumber = typeNumber;
+        this.errorCorrectLevel = errorCorrectLevel;
+        this.modules = null;
+        this.moduleCount = 0;
+        this.dataCache = null;
+        this.dataList = [];
+      }
+
+      QRCode.prototype = {
+        addData: function(data) {
+          this.dataList.push(new QR8BitByte(data));
+          this.dataCache = null;
+        },
+        isDark: function(row, col) {
+          if (row < 0 || this.moduleCount <= row || col < 0 || this.moduleCount <= col) throw new Error(row + "," + col);
+          return this.modules[row][col];
+        },
+        getModuleCount: function() { return this.moduleCount; },
+        make: function() {
+          if (this.typeNumber < 1) {
+            var typeNumber = 1;
+            for (typeNumber = 1; typeNumber <= 40; typeNumber++) {
+              var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, this.errorCorrectLevel);
+              var buffer = new BitBuffer();
+              var totalDataCount = 0;
+              for (var i = 0; i < rsBlocks.length; i++) totalDataCount += rsBlocks[i].dataCount;
+              for (var i = 0; i < this.dataList.length; i++) {
+                var data = this.dataList[i];
+                buffer.put(4, 4);
+                buffer.put(data.getLength(), QRCode.getLengthInBits(4, typeNumber));
+                data.write(buffer);
+              }
+              if (buffer.length <= totalDataCount * 8) break;
+            }
+            if (typeNumber > 40) throw new Error("データ長がQRコードの許容量を超えています。");
+            this.typeNumber = typeNumber;
+          }
+          this.makeImpl(false, this.getBestMaskPattern());
+        },
+        makeImpl: function(test, maskPattern) {
+          this.moduleCount = this.typeNumber * 4 + 17;
+          this.modules = new Array(this.moduleCount);
+          for (var row = 0; row < this.moduleCount; row++) {
+            this.modules[row] = new Array(this.moduleCount);
+            for (var col = 0; col < this.moduleCount; col++) this.modules[row][col] = null;
+          }
+          this.setupPositionProbePattern(0, 0);
+          this.setupPositionProbePattern(this.moduleCount - 7, 0);
+          this.setupPositionProbePattern(0, this.moduleCount - 7);
+          this.setupPositionAdjustPattern();
+          this.setupTimingPattern();
+          this.setupTypeInfo(test, maskPattern);
+          if (this.typeNumber >= 7) this.setupTypeNumber(test);
+          if (this.dataCache == null) this.dataCache = QRCode.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
+          this.mapData(this.dataCache, maskPattern);
+        },
+        setupPositionProbePattern: function(row, col) {
+          for (var r = -1; r <= 7; r++) {
+            if (row + r <= -1 || this.moduleCount <= row + r) continue;
+            for (var c = -1; c <= 7; c++) {
+              if (col + c <= -1 || this.moduleCount <= col + c) continue;
+              if ((0 <= r && r <= 6 && (c == 0 || c == 6)) || (0 <= c && c <= 6 && (r == 0 || r == 6)) || (2 <= r && r <= 4 && 2 <= c && c <= 4)) {
+                this.modules[row + r][col + c] = true;
+              } else {
+                this.modules[row + r][col + c] = false;
+              }
+            }
+          }
+        },
+        getBestMaskPattern: function() {
+          var minLostPoint = 0;
+          var bestMaskPattern = 0;
+          for (var i = 0; i < 8; i++) {
+            this.makeImpl(true, i);
+            var lostPoint = QRCode.getLostPoint(this);
+            if (i == 0 || minLostPoint > lostPoint) {
+              minLostPoint = lostPoint;
+              bestMaskPattern = i;
+            }
+          }
+          return bestMaskPattern;
+        },
+        setupTimingPattern: function() {
+          for (var r = 8; r < this.moduleCount - 8; r++) {
+            if (this.modules[r][6] != null) continue;
+            this.modules[r][6] = (r % 2 == 0);
+          }
+          for (var c = 8; c < this.moduleCount - 8; c++) {
+            if (this.modules[6][c] != null) continue;
+            this.modules[6][c] = (c % 2 == 0);
+          }
+        },
+        setupPositionAdjustPattern: function() {
+          var pos = QRCode.getPatternPosition(this.typeNumber);
+          for (var i = 0; i < pos.length; i++) {
+            for (var j = 0; j < pos.length; j++) {
+              var row = pos[i];
+              var col = pos[j];
+              if (this.modules[row][col] != null) continue;
+              for (var r = -2; r <= 2; r++) {
+                for (var c = -2; c <= 2; c++) {
+                  if (r == -2 || r == 2 || c == -2 || c == 2 || (r == 0 && c == 0)) {
+                    this.modules[row + r][col + c] = true;
+                  } else {
+                    this.modules[row + r][col + c] = false;
+                  }
+                }
+              }
+            }
+          }
+        },
+        setupTypeNumber: function(test) {
+          var bits = QRCode.getBCHTypeNumber(this.typeNumber);
+          for (var i = 0; i < 18; i++) {
+            var mod = (!test && ((bits >> i) & 1) == 1);
+            this.modules[Math.floor(i / 3)][i % 3 + this.moduleCount - 8 - 3] = mod;
+          }
+          for (var i = 0; i < 18; i++) {
+            var mod = (!test && ((bits >> i) & 1) == 1);
+            this.modules[i % 3 + this.moduleCount - 8 - 3][Math.floor(i / 3)] = mod;
+          }
+        },
+        setupTypeInfo: function(test, maskPattern) {
+          var data = (this.errorCorrectLevel << 3) | maskPattern;
+          var bits = QRCode.getBCHTypeInfo(data);
+          for (var i = 0; i < 15; i++) {
+            var mod = (!test && ((bits >> i) & 1) == 1);
+            if (i < 6) this.modules[i][8] = mod;
+            else if (i < 8) this.modules[i + 1][8] = mod;
+            else this.modules[this.moduleCount - 15 + i][8] = mod;
+          }
+          for (var i = 0; i < 15; i++) {
+            var mod = (!test && ((bits >> i) & 1) == 1);
+            if (i < 8) this.modules[8][this.moduleCount - i - 1] = mod;
+            else if (i < 9) this.modules[8][15 - i - 1 + 1] = mod;
+            else this.modules[8][15 - i - 1] = mod;
+          }
+          this.modules[this.moduleCount - 8][8] = (!test);
+        },
+        mapData: function(data, maskPattern) {
+          var inc = -1;
+          var row = this.moduleCount - 1;
+          var bitIndex = 7;
+          var byteIndex = 0;
+          for (var col = this.moduleCount - 1; col > 0; col -= 2) {
+            if (col == 6) col--;
+            while (true) {
+              for (var c = 0; c < 2; c++) {
+                if (this.modules[row][col - c] == null) {
+                  var dark = false;
+                  if (byteIndex < data.length) dark = (((data[byteIndex] >>> bitIndex) & 1) == 1);
+                  var mask = QRCode.getMask(maskPattern, row, col - c);
+                  if (mask) dark = !dark;
+                  this.modules[row][col - c] = dark;
+                  bitIndex--;
+                  if (bitIndex == -1) { byteIndex++; bitIndex = 7; }
+                }
+              }
+              row += inc;
+              if (row < 0 || this.moduleCount <= row) {
+                row -= inc;
+                inc = -inc;
+                break;
+              }
+            }
+          }
+        }
+      };
+
+      QRCode.getLostPoint = function(qrCode) {
+        var moduleCount = qrCode.getModuleCount();
+        var lostPoint = 0;
+        for (var row = 0; row < moduleCount; row++) {
+          for (var col = 0; col < moduleCount; col++) {
+            var sameCount = 0;
+            var dark = qrCode.isDark(row, col);
+            for (var r = -1; r <= 1; r++) {
+              if (row + r < 0 || moduleCount <= row + r) continue;
+              for (var c = -1; c <= 1; c++) {
+                if (col + c < 0 || moduleCount <= col + c) continue;
+                if (r == 0 && c == 0) continue;
+                if (dark == qrCode.isDark(row + r, col + c)) sameCount++;
+              }
+            }
+            if (sameCount > 5) lostPoint += (3 + sameCount - 5);
+          }
+        }
+        return lostPoint;
+      };
+
+      QRCode.getBCHTypeInfo = function(data) {
+        var d = data << 10;
+        while (QRCode.getBCHDigit(d) - QRCode.getBCHDigit(1335) >= 0) {
+          d ^= (1335 << (QRCode.getBCHDigit(d) - QRCode.getBCHDigit(1335)));
+        }
+        return ((data << 10) | d) ^ 21522;
+      };
+
+      QRCode.getBCHTypeNumber = function(data) {
+        var d = data << 12;
+        while (QRCode.getBCHDigit(d) - QRCode.getBCHDigit(7973) >= 0) {
+          d ^= (7973 << (QRCode.getBCHDigit(d) - QRCode.getBCHDigit(7973)));
+        }
+        return (data << 12) | d;
+      };
+
+      QRCode.getBCHDigit = function(data) {
+        var digit = 0;
+        while (data != 0) { digit++; data >>>= 1; }
+        return digit;
+      };
+
+      QRCode.getPatternPosition = function(typeNumber) {
+        return QRCode.PATTERN_POSITION_TABLE[typeNumber - 1];
+      };
+
+      QRCode.PATTERN_POSITION_TABLE = [
+        [], [6, 18], [6, 22], [6, 26], [6, 30], [6, 34], [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50],
+        [6, 30, 54], [6, 32, 58], [6, 34, 62], [6, 26, 46, 66], [6, 26, 48, 70], [6, 26, 50, 74], [6, 30, 54, 78],
+        [6, 30, 56, 82], [6, 30, 58, 86], [6, 34, 62, 90], [6, 28, 50, 72, 94], [6, 26, 50, 74, 98], [6, 30, 54, 78, 102],
+        [6, 28, 54, 80, 106], [6, 32, 58, 84, 110], [6, 30, 58, 86, 114], [6, 34, 62, 90, 118], [6, 26, 50, 74, 98, 122],
+        [6, 30, 54, 78, 102, 126], [6, 26, 52, 78, 104, 130], [6, 30, 56, 82, 108, 134], [6, 34, 60, 86, 112, 138],
+        [6, 30, 58, 86, 114, 142], [6, 34, 62, 90, 118, 146], [6, 30, 54, 78, 102, 126, 150], [6, 24, 50, 76, 102, 128, 154],
+        [6, 28, 54, 80, 106, 132, 158], [6, 32, 58, 84, 110, 136, 162], [6, 26, 54, 82, 110, 138, 166], [6, 30, 58, 86, 114, 142, 170]
+      ];
+
+      QRCode.getMask = function(maskPattern, i, j) {
+        switch (maskPattern) {
+          case 0: return (i + j) % 2 == 0;
+          case 1: return i % 2 == 0;
+          case 2: return j % 3 == 0;
+          case 3: return (i + j) % 3 == 0;
+          case 4: return (Math.floor(i / 2) + Math.floor(j / 3)) % 2 == 0;
+          case 5: return (i * j) % 2 + (i * j) % 3 == 0;
+          case 6: return ((i * j) % 2 + (i * j) % 3) % 2 == 0;
+          case 7: return ((i * j) % 3 + (i + j) % 2) % 2 == 0;
+          default: return false;
+        }
+      };
+
+      QRCode.createData = function(typeNumber, errorCorrectLevel, dataList) {
+        var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectLevel);
+        var buffer = new BitBuffer();
+        for (var i = 0; i < dataList.length; i++) {
+          var data = dataList[i];
+          buffer.put(4, 4);
+          buffer.put(data.getLength(), QRCode.getLengthInBits(4, typeNumber));
+          data.write(buffer);
+        }
+        var totalDataCount = 0;
+        for (var i = 0; i < rsBlocks.length; i++) totalDataCount += rsBlocks[i].dataCount;
+        if (buffer.length > totalDataCount * 8) throw new Error("code length overflow!");
+        if (buffer.length + 4 <= totalDataCount * 8) buffer.put(0, 4);
+        while (buffer.length % 8 != 0) buffer.putBit(false);
+        while (true) {
+          if (buffer.length >= totalDataCount * 8) break;
+          buffer.put(236, 8);
+          if (buffer.length >= totalDataCount * 8) break;
+          buffer.put(17, 8);
+        }
+        return QRCode.createBytes(buffer, rsBlocks);
+      };
+
+      QRCode.createBytes = function(buffer, rsBlocks) {
+        var offset = 0;
+        var maxDcCount = 0;
+        var maxEcCount = 0;
+        var dcdata = new Array(rsBlocks.length);
+        var ecdata = new Array(rsBlocks.length);
+        for (var r = 0; r < rsBlocks.length; r++) {
+          var dcCount = rsBlocks[r].dataCount;
+          var ecCount = rsBlocks[r].totalCount - dcCount;
+          maxDcCount = Math.max(maxDcCount, dcCount);
+          maxEcCount = Math.max(maxEcCount, ecCount);
+          dcdata[r] = new Array(dcCount);
+          for (var i = 0; i < dcdata[r].length; i++) dcdata[r][i] = 0xff & buffer.buffer[i + offset];
+          offset += dcCount;
+          var rsPoly = QRCode.getPolynomial(ecCount);
+          var rawPoly = new QRPolynomial(dcdata[r], rsPoly.getLength() - 1);
+          var modPoly = rawPoly.mod(rsPoly);
+          ecdata[r] = new Array(rsPoly.getLength() - 1);
+          for (var i = 0; i < ecdata[r].length; i++) {
+            var modIndex = i + modPoly.getLength() - ecdata[r].length;
+            ecdata[r][i] = (modIndex >= 0) ? modPoly.get(modIndex) : 0;
+          }
+        }
+        var totalCodeCount = 0;
+        for (var i = 0; i < rsBlocks.length; i++) totalCodeCount += rsBlocks[i].totalCount;
+        var data = new Array(totalCodeCount);
+        var index = 0;
+        for (var i = 0; i < maxDcCount; i++) {
+          for (var r = 0; r < rsBlocks.length; r++) {
+            if (i < dcdata[r].length) { data[index] = dcdata[r][i]; index++; }
+          }
+        }
+        for (var i = 0; i < maxEcCount; i++) {
+          for (var r = 0; r < rsBlocks.length; r++) {
+            if (i < ecdata[r].length) { data[index] = ecdata[r][i]; index++; }
+          }
+        }
+        return data;
+      };
+
+      QRCode.getPolynomial = function(errorCorrectLength) {
+        var a = new QRPolynomial([1], 0);
+        for (var i = 0; i < errorCorrectLength; i++) {
+          a = a.multiply(new QRPolynomial([1, QRMath.gexp(i)], 0));
+        }
+        return a;
+      };
+
+      QRCode.getLengthInBits = function(mode, type) {
+        if (1 <= type && type < 10) return 8;
+        else if (type < 27) return 16;
+        else return 16;
+      };
+
+      function QR8BitByte(data) {
+        this.mode = 4;
+        this.data = data;
+      }
+      QR8BitByte.prototype = {
+        getLength: function() {
+          return new TextEncoder().encode(this.data).length;
+        },
+        write: function(buffer) {
+          var bytes = new TextEncoder().encode(this.data);
+          for (var i = 0; i < bytes.length; i++) buffer.put(bytes[i], 8);
+        }
+      };
+
+      return {
+        createMatrix: function(text, ecc) {
+          var eccNum = 2; // Level H (復元率 30%)
+          var qr = new QRCode(0, eccNum);
+          qr.addData(text);
+          qr.make();
+          var count = qr.getModuleCount();
+          var modules = [];
+          for (var r = 0; r < count; r++) {
+            var row = [];
+            for (var c = 0; c < count; c++) {
+              row.push(qr.isDark(r, c));
+            }
+            modules.push(row);
+          }
+          return { size: count, modules: modules };
+        }
+      };
+    })();
+
+    /* =========================================================
+       2. アプリケーション状態 & 設定管理
+       ========================================================= */
+    var state = {
+      activeTab: 'url',
+      currentDir: 'top',
+      url: 'https://example.com',
+      gformUrl: '',
+      wifi: { ssid: '', password: '', type: 'WPA' },
+      batchUrls: [],
+      
+      dirs: {
+        top: { enable: true, text: '振り返りはこちら', fontSize: 16, textColor: '#ffffff', bgColor: '#2563eb', orient: 'horizontal' },
+        bottom: { enable: true, text: '先生から指示あったらアクセスしましょう', fontSize: 14, textColor: '#ffffff', bgColor: '#2563eb', orient: 'horizontal' },
+        left: { enable: false, text: '', fontSize: 14, textColor: '#334155', bgColor: '#e2e8f0', orient: 'vertical' },
+        right: { enable: false, text: '', fontSize: 14, textColor: '#334155', bgColor: '#e2e8f0', orient: 'vertical' }
+      },
+
+      qrDarkColor: '#000000',
+      qrLightColor: '#ffffff',
+      transparentBg: false,
+      dotStyle: 'square',
+      
+      centerIcon: 'none',
+      selectedEmoji: '🔗',
+      logoImage: null,
+      logoDataUrl: null,
+
+      defaultPhrases: [
+        '振り返りはこちら',
+        '先生から指示あったらアクセスしましょう',
+        '課題の提出先はこちら',
+        'アンケートにご協力ください',
+        'Wi-Fiに接続する',
+        '資料の閲覧はこちら'
+      ],
+      customPhrases: [],
+      history: []
+    };
+
+    // 初期化
+    window.addEventListener('DOMContentLoaded', function() {
+      loadLocalStorage();
+      renderPhrasePalette();
+      updateDirFormUI();
+      renderQR();
+    });
+
+    /* =========================================================
+       3. タブ ＆ 入力バインディング
+       ========================================================= */
+    function switchMainTab(tab) {
+      state.activeTab = tab;
+      document.querySelectorAll('.tabs .tab-btn').forEach(function(b, i) {
+        b.classList.toggle('active', ['url','gform','wifi','batch'][i] === tab);
+      });
+
+      document.getElementById('tabContentUrl').style.display = tab === 'url' ? 'block' : 'none';
+      document.getElementById('tabContentGForm').style.display = tab === 'gform' ? 'block' : 'none';
+      document.getElementById('tabContentWifi').style.display = tab === 'wifi' ? 'block' : 'none';
+      document.getElementById('tabContentBatch').style.display = tab === 'batch' ? 'block' : 'none';
+
+      renderQR();
+    }
+
+    function onUrlInput() {
+      var input = document.getElementById('targetUrl');
+      var val = input.value.trim();
+      if (val && !val.match(/^[a-zA-Z][a-zA-Z0-9+-.]*:\/\//)) {
+        state.url = 'https://' + val;
+      } else {
+        state.url = val || 'https://example.com';
+      }
+      renderQR();
+    }
+
+    function pasteUrl() {
+      navigator.clipboard.readText().then(function(text) {
+        document.getElementById('targetUrl').value = text;
+        onUrlInput();
+        commitHistory();
+        showToast('URLを貼り付けました');
+      }).catch(function() {
+        showToast('クリップボードの読み取りに失敗しました');
+      });
+    }
+
+    function onGFormInput() {
+      state.gformUrl = document.getElementById('gformUrl').value.trim();
+      renderQR();
+    }
+
+    /* [バグ修正1: Googleフォームの既存entry IDを破棄しないよう修正] */
+    function applyGFormClass(className) {
+      var input = document.getElementById('gformUrl');
+      var val = input.value.trim();
+      if (!val) {
+        val = 'https://docs.google.com/forms/d/e/sample/viewform';
+      }
+      
+      if (val.indexOf('entry.') !== -1) {
+        val = val.replace(/(entry\.\d+=)[^&]*/, '$1' + encodeURIComponent(className));
+      } else {
+        val += (val.indexOf('?') === -1 ? '?' : '&') + 'entry.1000000=' + encodeURIComponent(className);
+      }
+      input.value = val;
+      state.gformUrl = val;
+      commitHistory();
+      showToast('「' + className + '」パラメータを適用しました');
+      renderQR();
+    }
+
+    function updateWifiQr() {
+      state.wifi.ssid = document.getElementById('wifiSsid').value.trim();
+      state.wifi.password = document.getElementById('wifiPassword').value.trim();
+      state.wifi.type = document.getElementById('wifiType').value;
+      renderQR();
+    }
+
+    function escapeWifiString(str) {
+      return str.replace(/([\\;:,"])/g, '\\$1');
+    }
+
+    function processBatch() {
+      var lines = document.getElementById('batchInput').value.split('\n');
+      var validUrls = lines.map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+      if (validUrls.length === 0) {
+        showToast('変換するURLを入力してください');
+        return;
+      }
+
+      state.batchUrls = validUrls;
+      var grid = document.getElementById('batchResultGrid');
+      grid.innerHTML = '';
+
+      var originalUrl = state.url;
+      validUrls.forEach(function(url, idx) {
+        state.url = url.match(/^[a-zA-Z][a-zA-Z0-9+-.]*:\/\//) ? url : 'https://' + url;
+        renderQR();
+        var canvas = document.getElementById('qrCanvas');
+        var dataUrl = canvas.toDataURL('image/png');
+
+        var card = document.createElement('div');
+        card.className = 'batch-card';
+        card.innerHTML = '<img src="' + dataUrl + '"><div style="font-size:0.7rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:4px;">' + escapeXml(url) + '</div>';
+        
+        var dlBtn = document.createElement('button');
+        dlBtn.className = 'btn-sub';
+        dlBtn.style.padding = '2px 6px';
+        dlBtn.style.fontSize = '0.7rem';
+        dlBtn.style.width = '100%';
+        dlBtn.style.marginTop = '4px';
+        dlBtn.textContent = '💾 保存';
+        dlBtn.onclick = function() {
+          var a = document.createElement('a');
+          a.download = 'qr-' + (idx + 1) + '.png';
+          a.href = dataUrl;
+          a.click();
+        };
+        card.appendChild(dlBtn);
+        grid.appendChild(card);
+
+        pushHistory(state.url, 'url');
+      });
+
+      state.url = originalUrl;
+      renderQR();
+
+      document.getElementById('batchContainer').style.display = 'block';
+      showToast(validUrls.length + '件のQRコードを一括生成しました');
+    }
+
+    function printBatchAll() {
+      if (!state.batchUrls || state.batchUrls.length === 0) return;
+      var printArea = document.getElementById('printArea');
+      printArea.innerHTML = '';
+      
+      var headerText = document.getElementById('printHeaderTitle').value.trim();
+      if (headerText) {
+        var headDiv = document.createElement('div');
+        headDiv.className = 'print-header';
+        headDiv.textContent = headerText;
+        printArea.appendChild(headDiv);
+      }
+
+      var gridDiv = document.createElement('div');
+      gridDiv.className = 'print-grid';
+      document.documentElement.style.setProperty('--print-cols', 2);
+
+      var originalUrl = state.url;
+      state.batchUrls.forEach(function(url) {
+        state.url = url.match(/^[a-zA-Z][a-zA-Z0-9+-.]*:\/\//) ? url : 'https://' + url;
+        renderQR();
+        var canvas = document.getElementById('qrCanvas');
+        var img = document.createElement('img');
+        img.src = canvas.toDataURL('image/png');
+        img.style.width = '100%';
+        gridDiv.appendChild(img);
+      });
+
+      state.url = originalUrl;
+      printArea.appendChild(gridDiv);
+      renderQR();
+
+      setTimeout(function() {
+        window.print();
+        /* [バグ修正5: 印刷後のDOMクリーンアップ] */
+        printArea.innerHTML = '';
+      }, 300);
+    }
+
+    function getTargetContent() {
+      if (state.activeTab === 'url') {
+        return state.url;
+      } else if (state.activeTab === 'gform') {
+        return state.gformUrl || 'https://docs.google.com/forms';
+      } else if (state.activeTab === 'wifi') {
+        var ssid = escapeWifiString(state.wifi.ssid);
+        var pass = escapeWifiString(state.wifi.password);
+        var type = state.wifi.type === 'nopass' ? 'nopass' : state.wifi.type;
+        return 'WIFI:S:' + ssid + ';T:' + type + ';P:' + pass + ';;';
+      }
+      return state.url;
+    }
+
+    /* =========================================================
+       4. 四方向テキストレイアウト管理
+       ========================================================= */
+    function switchDirection(dir) {
+      state.currentDir = dir;
+      ['top','bottom','left','right'].forEach(function(d) {
+        document.getElementById('dirBtn' + d.charAt(0).toUpperCase() + d.slice(1)).classList.toggle('active', d === dir);
+      });
+      updateDirFormUI();
+    }
+
+    function updateDirFormUI() {
+      var d = state.dirs[state.currentDir];
+      document.getElementById('dirEnable').checked = d.enable;
+      document.getElementById('dirText').value = d.text;
+      document.getElementById('dirFontSize').value = d.fontSize;
+      document.getElementById('dirTextColor').value = d.textColor;
+      document.getElementById('dirBgColor').value = d.bgColor;
+      
+      var isLR = (state.currentDir === 'left' || state.currentDir === 'right');
+      document.getElementById('verticalOption').style.display = isLR ? 'block' : 'none';
+      if (isLR) {
+        document.getElementById('dirOrient').value = d.orient;
+      }
+    }
+
+    function updateCurrentDirSetting() {
+      var d = state.dirs[state.currentDir];
+      d.enable = document.getElementById('dirEnable').checked;
+      d.text = document.getElementById('dirText').value;
+      d.fontSize = parseInt(document.getElementById('dirFontSize').value, 10);
+      d.textColor = document.getElementById('dirTextColor').value;
+      d.bgColor = document.getElementById('dirBgColor').value;
+      if (state.currentDir === 'left' || state.currentDir === 'right') {
+        d.orient = document.getElementById('dirOrient').value;
+      }
+      renderQR();
+    }
+
+    function insertPhrase(text) {
+      document.getElementById('dirText').value = text;
+      state.dirs[state.currentDir].enable = true;
+      document.getElementById('dirEnable').checked = true;
+      updateCurrentDirSetting();
+      showToast('文章を「' + state.currentDir + '」に挿入しました');
+    }
+
+    function renderPhrasePalette() {
+      var container = document.getElementById('phrasePalette');
+      container.innerHTML = '';
+      
+      state.defaultPhrases.concat(state.customPhrases).forEach(function(p) {
+        var chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = p;
+        chip.onclick = function() { insertPhrase(p); };
+        container.appendChild(chip);
+      });
+
+      var addBtn = document.createElement('span');
+      addBtn.className = 'chip chip-add';
+      addBtn.textContent = '➕ 追加...';
+      addBtn.onclick = addNewCustomPhrase;
+      container.appendChild(addBtn);
+    }
+
+    function addNewCustomPhrase() {
+      var phrase = prompt('よく使うオリジナルの文章を入力してください:');
+      if (phrase && phrase.trim()) {
+        state.customPhrases.push(phrase.trim());
+        saveLocalStorage();
+        renderPhrasePalette();
+        showToast('定型文を保存しました');
+      }
+    }
+
+    /* =========================================================
+       5. カラーテーマ ＆ アイコン設定 (全UIピッカーの完全同期)
+       ========================================================= */
+    function applyTheme(theme) {
+      if (theme === 'standard') {
+        setThemeColors('#2563eb', '#ffffff', '#000000', '#ffffff');
+      } else if (theme === 'gpurple') {
+        setThemeColors('#7c3aed', '#ffffff', '#000000', '#ffffff');
+      } else if (theme === 'school') {
+        setThemeColors('#059669', '#ffffff', '#065f46', '#ffffff');
+      } else if (theme === 'chic') {
+        setThemeColors('#1e293b', '#ffffff', '#000000', '#ffffff');
+      } else if (theme === 'warning') {
+        setThemeColors('#dc2626', '#ffffff', '#991b1b', '#ffffff');
+      } else if (theme === 'natural') {
+        setThemeColors('#d97706', '#ffffff', '#78350f', '#ffffff');
+      }
+      showToast('テーマを適用しました');
+    }
+
+    function setThemeColors(bannerBg, bannerText, qrDark, qrLight) {
+      ['top','bottom','left','right'].forEach(function(d) {
+        state.dirs[d].bgColor = bannerBg;
+        state.dirs[d].textColor = bannerText;
+      });
+      state.qrDarkColor = qrDark;
+      state.qrLightColor = qrLight;
+      
+      document.getElementById('qrDarkColor').value = qrDark;
+      document.getElementById('qrLightColor').value = qrLight;
+
+      updateDirFormUI();
+      renderQR();
+    }
+
+    function onCenterIconChange() {
+      var val = document.getElementById('centerIconType').value;
+      state.centerIcon = val;
+      document.getElementById('emojiSelectGroup').style.display = val === 'emoji' ? 'block' : 'none';
+      document.getElementById('imageUploadGroup').style.display = val === 'image' ? 'block' : 'none';
+      renderQR();
+    }
+
+    function selectEmoji(emoji) {
+      state.selectedEmoji = emoji;
+      renderQR();
+    }
+
+    function handleLogoUpload(e) {
+      var file = e.target.files[0];
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+          state.logoDataUrl = evt.target.result;
+          var img = new Image();
+          img.onload = function() {
+            state.logoImage = img;
+            renderQR();
+          };
+          img.src = state.logoDataUrl;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    /* =========================================================
+       6. リアルタイム Canvas 描画エンジン
+       ========================================================= */
+    function renderQR() {
+      var canvas = document.getElementById('qrCanvas');
+      var ctx = canvas.getContext('2d');
+      var textContent = getTargetContent();
+
+      var qrData;
+      try {
+        qrData = QRCodeLib.createMatrix(textContent, 'H');
+      } catch(e) {
+        showToast('入力テキストが長すぎるためQRコードを生成できません');
+        return;
+      }
+
+      var matrixSize = qrData.size;
+
+      var qrCellSize = Math.max(4, Math.min(10, Math.floor(320 / matrixSize)));
+      var qrCoreSize = matrixSize * qrCellSize;
+      var padding = 20;
+
+      var topHeight = (state.dirs.top.enable && state.dirs.top.text) ? (state.dirs.top.fontSize + 18) : 0;
+      var bottomHeight = (state.dirs.bottom.enable && state.dirs.bottom.text) ? (state.dirs.bottom.fontSize + 18) : 0;
+      var leftWidth = (state.dirs.left.enable && state.dirs.left.text) ? (state.dirs.left.fontSize + 18) : 0;
+      var rightWidth = (state.dirs.right.enable && state.dirs.right.text) ? (state.dirs.right.fontSize + 18) : 0;
+
+      var totalWidth = leftWidth + padding + qrCoreSize + padding + rightWidth;
+      var totalHeight = topHeight + padding + qrCoreSize + padding + bottomHeight;
+
+      var scale = 2; // 高画質レンダリング
+      canvas.width = totalWidth * scale;
+      canvas.height = totalHeight * scale;
+
+      ctx.save();
+      ctx.scale(scale, scale);
+
+      ctx.clearRect(0, 0, totalWidth, totalHeight);
+      state.transparentBg = document.getElementById('transparentBg').checked;
+
+      if (!state.transparentBg) {
+        ctx.fillStyle = state.qrLightColor;
+        ctx.fillRect(0, 0, totalWidth, totalHeight);
+      }
+
+      // 上部バナー描画
+      if (topHeight > 0) {
+        ctx.fillStyle = state.dirs.top.bgColor;
+        ctx.fillRect(0, 0, totalWidth, topHeight);
+        
+        ctx.fillStyle = state.dirs.top.textColor;
+        ctx.font = 'bold ' + state.dirs.top.fontSize + 'px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(state.dirs.top.text, totalWidth / 2, topHeight / 2);
+      }
+
+      // 下部バナー描画
+      if (bottomHeight > 0) {
+        var startY = totalHeight - bottomHeight;
+        ctx.fillStyle = state.dirs.bottom.bgColor;
+        ctx.fillRect(0, startY, totalWidth, bottomHeight);
+
+        ctx.fillStyle = state.dirs.bottom.textColor;
+        ctx.font = 'bold ' + state.dirs.bottom.fontSize + 'px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(state.dirs.bottom.text, totalWidth / 2, startY + (bottomHeight / 2));
+      }
+
+      // 左部バナー描画
+      if (leftWidth > 0) {
+        var startY = topHeight;
+        var height = totalHeight - topHeight - bottomHeight;
+        ctx.fillStyle = state.dirs.left.bgColor;
+        ctx.fillRect(0, startY, leftWidth, height);
+
+        ctx.fillStyle = state.dirs.left.textColor;
+        ctx.font = 'bold ' + state.dirs.left.fontSize + 'px sans-serif';
+
+        if (state.dirs.left.orient === 'vertical') {
+          drawVerticalText(ctx, state.dirs.left.text, leftWidth / 2, startY + (height / 2), state.dirs.left.fontSize);
+        } else {
+          ctx.save();
+          ctx.translate(leftWidth / 2, startY + (height / 2));
+          ctx.rotate(-Math.PI / 2);
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(state.dirs.left.text, 0, 0);
+          ctx.restore();
+        }
+      }
+
+      // 右部バナー描画
+      if (rightWidth > 0) {
+        var startX = totalWidth - rightWidth;
+        var startY = topHeight;
+        var height = totalHeight - topHeight - bottomHeight;
+        ctx.fillStyle = state.dirs.right.bgColor;
+        ctx.fillRect(startX, startY, rightWidth, height);
+
+        ctx.fillStyle = state.dirs.right.textColor;
+        ctx.font = 'bold ' + state.dirs.right.fontSize + 'px sans-serif';
+
+        if (state.dirs.right.orient === 'vertical') {
+          drawVerticalText(ctx, state.dirs.right.text, startX + (rightWidth / 2), startY + (height / 2), state.dirs.right.fontSize);
+        } else {
+          ctx.save();
+          ctx.translate(startX + (rightWidth / 2), startY + (height / 2));
+          ctx.rotate(Math.PI / 2);
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(state.dirs.right.text, 0, 0);
+          ctx.restore();
+        }
+      }
+
+      // QRコードマトリクス描画
+      var qrStartX = leftWidth + padding;
+      var qrStartY = topHeight + padding;
+      state.dotStyle = document.getElementById('dotStyle').value;
+
+      ctx.fillStyle = state.qrDarkColor;
+      for (var r = 0; r < matrixSize; r++) {
+        for (var c = 0; c < matrixSize; c++) {
+          if (qrData.modules[r][c]) {
+            var isFinder = (r < 7 && c < 7) || (r < 7 && c >= matrixSize - 7) || (r >= matrixSize - 7 && c < 7);
+            if (state.dotStyle === 'circle' && !isFinder) {
+              ctx.beginPath();
+              ctx.arc(qrStartX + c * qrCellSize + qrCellSize / 2, qrStartY + r * qrCellSize + qrCellSize / 2, qrCellSize / 2.1, 0, Math.PI * 2);
+              ctx.fill();
+            } else {
+              ctx.fillRect(qrStartX + c * qrCellSize, qrStartY + r * qrCellSize, qrCellSize, qrCellSize);
+            }
+          }
+        }
+      }
+
+      // 中央アイコン / 絵文字 / ロゴ重ね合わせ
+      if (state.centerIcon === 'emoji' && state.selectedEmoji) {
+        var centerX = qrStartX + (qrCoreSize / 2);
+        var centerY = qrStartY + (qrCoreSize / 2);
+        var iconSize = qrCoreSize * 0.22;
+
+        ctx.fillStyle = state.qrLightColor;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, iconSize / 1.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = (iconSize * 0.8) + 'px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(state.selectedEmoji, centerX, centerY);
+      } else if (state.centerIcon === 'image' && state.logoImage) {
+        var centerX = qrStartX + (qrCoreSize / 2);
+        var centerY = qrStartY + (qrCoreSize / 2);
+        var iconSize = qrCoreSize * 0.24;
+
+        ctx.fillStyle = state.qrLightColor;
+        ctx.fillRect(centerX - (iconSize / 2) - 4, centerY - (iconSize / 2) - 4, iconSize + 8, iconSize + 8);
+
+        ctx.drawImage(state.logoImage, centerX - (iconSize / 2), centerY - (iconSize / 2), iconSize, iconSize);
+      }
+
+      ctx.restore();
+
+      checkContrastRatio(state.qrDarkColor, state.qrLightColor);
+    }
+
+    /* [バグ修正6: 縦書き記号の回転軸および位置補正] */
+    function drawVerticalText(ctx, text, x, centerY, fontSize) {
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var chars = text.split('');
+      var totalH = chars.length * fontSize;
+      var startY = centerY - (totalH / 2) + (fontSize / 2);
+
+      chars.forEach(function(ch, i) {
+        var curY = startY + (i * fontSize);
+        if (ch === 'ー' || ch === '-' || ch === '―') {
+          ctx.save();
+          ctx.translate(x, curY);
+          ctx.rotate(Math.PI / 2);
+          ctx.fillText('ー', 0, 0);
+          ctx.restore();
+        } else if (ch === '（' || ch === '(' || ch === '［' || ch === '[') {
+          ctx.save();
+          ctx.translate(x, curY);
+          ctx.rotate(Math.PI / 2);
+          ctx.fillText('（', 0, 0);
+          ctx.restore();
+        } else if (ch === '）' || ch === ')' || ch === '］' || ch === ']') {
+          ctx.save();
+          ctx.translate(x, curY);
+          ctx.rotate(Math.PI / 2);
+          ctx.fillText('）', 0, 0);
+          ctx.restore();
+        } else if (ch === '、' || ch === '。') {
+          ctx.save();
+          ctx.translate(x + fontSize * 0.3, curY - fontSize * 0.3);
+          ctx.fillText(ch, 0, 0);
+          ctx.restore();
+        } else {
+          ctx.fillText(ch, x, curY);
+        }
+      });
+    }
+
+    function checkContrastRatio(c1, c2) {
+      function getLuminance(hex) {
+        var rgb = parseInt(hex.slice(1), 16);
+        var r = (rgb >> 16) & 0xff;
+        var g = (rgb >> 8) & 0xff;
+        var b = (rgb >> 0) & 0xff;
+        var a = [r, g, b].map(function(v) {
+          v /= 255;
+          return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        });
+        return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+      }
+
+      var l1 = getLuminance(c1);
+      var l2 = getLuminance(c2);
+      var ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+
+      var badge = document.getElementById('contrastBadge');
+      if (ratio >= 3.0) {
+        badge.className = 'contrast-badge contrast-ok';
+        badge.textContent = '✓ 読み取り視認性良好 (比率: ' + ratio.toFixed(1) + ':1)';
+      } else {
+        badge.className = 'contrast-badge contrast-warn';
+        badge.textContent = '⚠️ 色の濃淡が薄く、カメラで読めない可能性があります';
+      }
+    }
+
+    /* =========================================================
+       7. 保存・エクスポート ＆ 印刷機能
+       ========================================================= */
+    function downloadPNG() {
+      commitHistory();
+      var canvas = document.getElementById('qrCanvas');
+      var link = document.createElement('a');
+      link.download = 'framed-qr-' + Date.now() + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('PNG画像をダウンロードしました');
+    }
+
+    /* [バグ修正3: SVGでの href 属性追加・XMLエスケープ適用] */
+    function downloadSVG() {
+      commitHistory();
+      var textContent = getTargetContent();
+      var qrData;
+      try {
+        qrData = QRCodeLib.createMatrix(textContent, 'H');
+      } catch(e) {
+        showToast('入力テキストが長すぎます');
+        return;
+      }
+
+      var matrixSize = qrData.size;
+      var qrCellSize = Math.max(4, Math.min(10, Math.floor(320 / matrixSize)));
+      var qrCoreSize = matrixSize * qrCellSize;
+      var padding = 20;
+
+      var topHeight = (state.dirs.top.enable && state.dirs.top.text) ? (state.dirs.top.fontSize + 18) : 0;
+      var bottomHeight = (state.dirs.bottom.enable && state.dirs.bottom.text) ? (state.dirs.bottom.fontSize + 18) : 0;
+      var leftWidth = (state.dirs.left.enable && state.dirs.left.text) ? (state.dirs.left.fontSize + 18) : 0;
+      var rightWidth = (state.dirs.right.enable && state.dirs.right.text) ? (state.dirs.right.fontSize + 18) : 0;
+
+      var totalWidth = leftWidth + padding + qrCoreSize + padding + rightWidth;
+      var totalHeight = topHeight + padding + qrCoreSize + padding + bottomHeight;
+
+      var svg = [];
+      svg.push('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + totalWidth + '" height="' + totalHeight + '" viewBox="0 0 ' + totalWidth + ' ' + totalHeight + '">');
+
+      if (!state.transparentBg) {
+        svg.push('<rect width="' + totalWidth + '" height="' + totalHeight + '" fill="' + state.qrLightColor + '"/>');
+      }
+
+      if (topHeight > 0) {
+        svg.push('<rect width="' + totalWidth + '" height="' + topHeight + '" fill="' + state.dirs.top.bgColor + '"/>');
+        svg.push('<text x="' + (totalWidth / 2) + '" y="' + (topHeight / 2) + '" fill="' + state.dirs.top.textColor + '" font-size="' + state.dirs.top.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">' + escapeXml(state.dirs.top.text) + '</text>');
+      }
+
+      if (bottomHeight > 0) {
+        var startY = totalHeight - bottomHeight;
+        svg.push('<rect y="' + startY + '" width="' + totalWidth + '" height="' + bottomHeight + '" fill="' + state.dirs.bottom.bgColor + '"/>');
+        svg.push('<text x="' + (totalWidth / 2) + '" y="' + (startY + bottomHeight / 2) + '" fill="' + state.dirs.bottom.textColor + '" font-size="' + state.dirs.bottom.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">' + escapeXml(state.dirs.bottom.text) + '</text>');
+      }
+
+      if (leftWidth > 0) {
+        var startY = topHeight;
+        var height = totalHeight - topHeight - bottomHeight;
+        svg.push('<rect y="' + startY + '" width="' + leftWidth + '" height="' + height + '" fill="' + state.dirs.left.bgColor + '"/>');
+        if (state.dirs.left.orient === 'horizontal') {
+          svg.push('<text x="' + (leftWidth / 2) + '" y="' + (startY + height / 2) + '" fill="' + state.dirs.left.textColor + '" font-size="' + state.dirs.left.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(-90 ' + (leftWidth/2) + ' ' + (startY+height/2) + ')">' + escapeXml(state.dirs.left.text) + '</text>');
+        } else {
+          var chars = state.dirs.left.text.split('');
+          var totalH = chars.length * state.dirs.left.fontSize;
+          var vStartY = startY + (height / 2) - (totalH / 2) + (state.dirs.left.fontSize / 2);
+          chars.forEach(function(ch, i) {
+            var cy = vStartY + i * state.dirs.left.fontSize;
+            if (ch === 'ー' || ch === '-' || ch === '―') {
+              svg.push('<text x="' + (leftWidth / 2) + '" y="' + cy + '" fill="' + state.dirs.left.textColor + '" font-size="' + state.dirs.left.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(90 ' + (leftWidth/2) + ' ' + cy + ')">ー</text>');
+            } else if (ch === '（' || ch === '(' || ch === '［' || ch === '[') {
+              svg.push('<text x="' + (leftWidth / 2) + '" y="' + cy + '" fill="' + state.dirs.left.textColor + '" font-size="' + state.dirs.left.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(90 ' + (leftWidth/2) + ' ' + cy + ')">（</text>');
+            } else if (ch === '）' || ch === ')' || ch === '］' || ch === ']') {
+              svg.push('<text x="' + (leftWidth / 2) + '" y="' + cy + '" fill="' + state.dirs.left.textColor + '" font-size="' + state.dirs.left.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(90 ' + (leftWidth/2) + ' ' + cy + ')">）</text>');
+            } else if (ch === '、' || ch === '。') {
+              svg.push('<text x="' + (leftWidth / 2 + state.dirs.left.fontSize * 0.3) + '" y="' + (cy - state.dirs.left.fontSize * 0.3) + '" fill="' + state.dirs.left.textColor + '" font-size="' + state.dirs.left.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">' + escapeXml(ch) + '</text>');
+            } else {
+              svg.push('<text x="' + (leftWidth / 2) + '" y="' + cy + '" fill="' + state.dirs.left.textColor + '" font-size="' + state.dirs.left.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">' + escapeXml(ch) + '</text>');
+            }
+          });
+        }
+      }
+
+      if (rightWidth > 0) {
+        var startX = totalWidth - rightWidth;
+        var startY = topHeight;
+        var height = totalHeight - topHeight - bottomHeight;
+        svg.push('<rect x="' + startX + '" y="' + startY + '" width="' + rightWidth + '" height="' + height + '" fill="' + state.dirs.right.bgColor + '"/>');
+        if (state.dirs.right.orient === 'horizontal') {
+          svg.push('<text x="' + (startX + rightWidth / 2) + '" y="' + (startY + height / 2) + '" fill="' + state.dirs.right.textColor + '" font-size="' + state.dirs.right.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(90 ' + (startX + rightWidth/2) + ' ' + (startY+height/2) + ')">' + escapeXml(state.dirs.right.text) + '</text>');
+        } else {
+          var chars = state.dirs.right.text.split('');
+          var totalH = chars.length * state.dirs.right.fontSize;
+          var vStartY = startY + (height / 2) - (totalH / 2) + (state.dirs.right.fontSize / 2);
+          chars.forEach(function(ch, i) {
+            var cy = vStartY + i * state.dirs.right.fontSize;
+            if (ch === 'ー' || ch === '-' || ch === '―') {
+              svg.push('<text x="' + (startX + rightWidth / 2) + '" y="' + cy + '" fill="' + state.dirs.right.textColor + '" font-size="' + state.dirs.right.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(90 ' + (startX + rightWidth/2) + ' ' + cy + ')">ー</text>');
+            } else if (ch === '（' || ch === '(' || ch === '［' || ch === '[') {
+              svg.push('<text x="' + (startX + rightWidth / 2) + '" y="' + cy + '" fill="' + state.dirs.right.textColor + '" font-size="' + state.dirs.right.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(90 ' + (startX + rightWidth/2) + ' ' + cy + ')">（</text>');
+            } else if (ch === '）' || ch === ')' || ch === '］' || ch === ']') {
+              svg.push('<text x="' + (startX + rightWidth / 2) + '" y="' + cy + '" fill="' + state.dirs.right.textColor + '" font-size="' + state.dirs.right.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central" transform="rotate(90 ' + (startX + rightWidth/2) + ' ' + cy + ')">）</text>');
+            } else if (ch === '、' || ch === '。') {
+              svg.push('<text x="' + (startX + rightWidth / 2 + state.dirs.right.fontSize * 0.3) + '" y="' + (cy - state.dirs.right.fontSize * 0.3) + '" fill="' + state.dirs.right.textColor + '" font-size="' + state.dirs.right.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">' + escapeXml(ch) + '</text>');
+            } else {
+              svg.push('<text x="' + (startX + rightWidth / 2) + '" y="' + cy + '" fill="' + state.dirs.right.textColor + '" font-size="' + state.dirs.right.fontSize + '" font-weight="bold" font-family="sans-serif" text-anchor="middle" dominant-baseline="central">' + escapeXml(ch) + '</text>');
+            }
+          });
+        }
+      }
+
+      var qrStartX = leftWidth + padding;
+      var qrStartY = topHeight + padding;
+      state.dotStyle = document.getElementById('dotStyle').value;
+
+      for (var r = 0; r < matrixSize; r++) {
+        for (var c = 0; c < matrixSize; c++) {
+          if (qrData.modules[r][c]) {
+            var isFinder = (r < 7 && c < 7) || (r < 7 && c >= matrixSize - 7) || (r >= matrixSize - 7 && c < 7);
+            if (state.dotStyle === 'circle' && !isFinder) {
+              var cx = qrStartX + c * qrCellSize + qrCellSize / 2;
+              var cy = qrStartY + r * qrCellSize + qrCellSize / 2;
+              svg.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + (qrCellSize / 2.1) + '" fill="' + state.qrDarkColor + '"/>');
+            } else {
+              svg.push('<rect x="' + (qrStartX + c * qrCellSize) + '" y="' + (qrStartY + r * qrCellSize) + '" width="' + qrCellSize + '" height="' + qrCellSize + '" fill="' + state.qrDarkColor + '"/>');
+            }
+          }
+        }
+      }
+
+      if (state.centerIcon === 'emoji' && state.selectedEmoji) {
+        var centerX = qrStartX + (qrCoreSize / 2);
+        var centerY = qrStartY + (qrCoreSize / 2);
+        var iconSize = qrCoreSize * 0.22;
+        svg.push('<circle cx="' + centerX + '" cy="' + centerY + '" r="' + (iconSize / 1.6) + '" fill="' + state.qrLightColor + '"/>');
+        svg.push('<text x="' + centerX + '" y="' + centerY + '" font-size="' + (iconSize * 0.8) + '" text-anchor="middle" dominant-baseline="central">' + escapeXml(state.selectedEmoji) + '</text>');
+      } else if (state.centerIcon === 'image' && state.logoDataUrl) {
+        var centerX = qrStartX + (qrCoreSize / 2);
+        var centerY = qrStartY + (qrCoreSize / 2);
+        var iconSize = qrCoreSize * 0.24;
+        svg.push('<rect x="' + (centerX - iconSize / 2 - 4) + '" y="' + (centerY - iconSize / 2 - 4) + '" width="' + (iconSize + 8) + '" height="' + (iconSize + 8) + '" fill="' + state.qrLightColor + '"/>');
+        svg.push('<image x="' + (centerX - iconSize / 2) + '" y="' + (centerY - iconSize / 2) + '" width="' + iconSize + '" height="' + iconSize + '" href="' + escapeXml(state.logoDataUrl) + '" xlink:href="' + escapeXml(state.logoDataUrl) + '"/>');
+      }
+
+      svg.push('</svg>');
+
+      var blob = new Blob([svg.join('\n')], { type: 'image/svg+xml;charset=utf-8' });
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'framed-qr-' + Date.now() + '.svg';
+      link.click();
+      showToast('SVG形式で保存しました');
+    }
+
+    function escapeXml(str) {
+      if (!str) return '';
+      return str.replace(/[<>&'"]/g, function (c) {
+        switch (c) {
+          case '<': return '&lt;';
+          case '>': return '&gt;';
+          case '&': return '&amp;';
+          case '\'': return '&apos;';
+          case '"': return '&quot;';
+        }
+      });
+    }
+
+    function copyToClipboard() {
+      commitHistory();
+      var canvas = document.getElementById('qrCanvas');
+      canvas.toBlob(function(blob) {
+        if (!blob) {
+          showToast('画像の生成に失敗しました');
+          return;
+        }
+        if (!navigator.clipboard || !window.ClipboardItem) {
+          showToast('お使いのブラウザは画像コピーに対応していません');
+          return;
+        }
+        try {
+          var item = new ClipboardItem({ 'image/png': blob });
+          navigator.clipboard.write([item]).then(function() {
+            showToast('画像をクリップボードにコピーしました！');
+          }).catch(function() {
+            showToast('コピーに失敗しました（ブラウザの権限を確認してください）');
+          });
+        } catch (e) {
+          showToast('お使いのブラウザは画像直接コピー未対応です');
+        }
+      });
+    }
+
+    function printLayout(count) {
+      commitHistory();
+      var canvas = document.getElementById('qrCanvas');
+      var imgData = canvas.toDataURL('image/png');
+      var printArea = document.getElementById('printArea');
+      printArea.innerHTML = '';
+      
+      var headerText = document.getElementById('printHeaderTitle').value.trim();
+      if (headerText) {
+        var headDiv = document.createElement('div');
+        headDiv.className = 'print-header';
+        headDiv.textContent = headerText;
+        printArea.appendChild(headDiv);
+      }
+
+      var gridDiv = document.createElement('div');
+      gridDiv.className = 'print-grid';
+      var cols = count === 1 ? 1 : (count <= 4 ? 2 : 3);
+      document.documentElement.style.setProperty('--print-cols', cols);
+
+      for (var i = 0; i < count; i++) {
+        var img = document.createElement('img');
+        img.src = imgData;
+        img.style.width = '100%';
+        img.style.height = 'auto';
+        gridDiv.appendChild(img);
+      }
+
+      printArea.appendChild(gridDiv);
+
+      setTimeout(function() {
+        window.print();
+        /* [バグ修正5: 印刷後のDOMクリーンアップ] */
+        printArea.innerHTML = '';
+      }, 300);
+    }
+
+    /* =========================================================
+       8. 作成履歴 & LocalStorage
+       ========================================================= */
+    function commitHistory() {
+      var content = getTargetContent();
+      pushHistory(content, state.activeTab);
+    }
+
+    function pushHistory(content, tabType) {
+      if (!content || content === 'https://example.com') return;
+      var exists = state.history.some(function(h) { return h.content === content; });
+      if (!exists) {
+        state.history.unshift({
+          content: content,
+          tab: tabType || state.activeTab,
+          date: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        });
+        if (state.history.length > 10) state.history.pop();
+        renderHistory();
+        saveLocalStorage();
+      }
+    }
+
+    /* [バグ修正4: SSID空文字時のマッチング失敗を修正] */
+    function renderHistory() {
+      var container = document.getElementById('historyList');
+      if (state.history.length === 0) {
+        container.innerHTML = '<p style="font-size: 0.8rem; color: var(--text-muted);">履歴はありません</p>';
+        return;
+      }
+      container.innerHTML = '';
+      state.history.forEach(function(item) {
+        var el = document.createElement('div');
+        el.className = 'history-item';
+        
+        var displayLabel = item.content;
+        if (item.tab === 'wifi') {
+          var ssidMatch = item.content.match(/S:((?:\\;|[^;])*);/);
+          displayLabel = '📶 ' + (ssidMatch && ssidMatch[1] ? ssidMatch[1].replace(/\\([\\;:,"])/g, '$1') : 'Wi-Fi');
+        } else if (item.tab === 'gform') {
+          displayLabel = '📝 Google Form';
+        }
+
+        el.innerHTML = '<div style="font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">' + escapeXml(displayLabel) + '</div><div style="color:var(--text-muted); font-size:0.7rem;">' + item.date + '</div>';
+        
+        el.onclick = function() {
+          var targetTab = item.tab || 'url';
+          switchMainTab(targetTab);
+
+          if (targetTab === 'url') {
+            document.getElementById('targetUrl').value = item.content;
+            state.url = item.content;
+          } else if (targetTab === 'gform') {
+            document.getElementById('gformUrl').value = item.content;
+            state.gformUrl = item.content;
+          } else if (targetTab === 'wifi') {
+            var sMatch = item.content.match(/S:((?:\\;|[^;])*);/);
+            var pMatch = item.content.match(/P:((?:\\;|[^;])*);/);
+            var tMatch = item.content.match(/T:((?:\\;|[^;])*);/);
+            if (sMatch) {
+              document.getElementById('wifiSsid').value = sMatch[1].replace(/\\([\\;:,"])/g, '$1');
+              state.wifi.ssid = document.getElementById('wifiSsid').value;
+            }
+            if (pMatch) {
+              document.getElementById('wifiPassword').value = pMatch[1].replace(/\\([\\;:,"])/g, '$1');
+              state.wifi.password = document.getElementById('wifiPassword').value;
+            }
+            if (tMatch) {
+              document.getElementById('wifiType').value = tMatch[1] || 'WPA';
+              state.wifi.type = document.getElementById('wifiType').value;
+            }
+          }
+          renderQR();
+          showToast('履歴から復元しました');
+        };
+        container.appendChild(el);
+      });
+    }
+
+    function saveLocalStorage() {
+      try {
+        localStorage.setItem('qr_app_phrases', JSON.stringify(state.customPhrases));
+        localStorage.setItem('qr_app_history', JSON.stringify(state.history));
+      } catch(e) {}
+    }
+
+    function loadLocalStorage() {
+      try {
+        var p = localStorage.getItem('qr_app_phrases');
+        if (p) state.customPhrases = JSON.parse(p);
+        var h = localStorage.getItem('qr_app_history');
+        if (h) state.history = JSON.parse(h);
+        renderHistory();
+      } catch(e) {}
+    }
+
+    /* =========================================================
+       9. ユーティリティ
+       ========================================================= */
+    function toggleModal(open) {
+      document.getElementById('helpModal').classList.toggle('open', open);
+    }
+
+    function showToast(msg) {
+      var toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(function() {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+  </script>
+</body>
+</html>
